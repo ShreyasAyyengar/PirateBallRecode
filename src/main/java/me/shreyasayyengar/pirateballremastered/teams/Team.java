@@ -2,8 +2,10 @@ package me.shreyasayyengar.pirateballremastered.teams;
 
 import me.shreyasayyengar.pirateballremastered.game.GamePlayer;
 import me.shreyasayyengar.pirateballremastered.utils.worldutils.CuboidRegion;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -12,8 +14,6 @@ public class Team {
 
     private final TeamInfo teamData;
     private final TeamBall ballData;
-
-    //    private final List<UUID> players; will work out a custom player object for the game
 
     private final HashMap<UUID, GamePlayer> players = new HashMap<>(); // ? maybe
 
@@ -25,6 +25,34 @@ public class Team {
 
     }
 
+    public void addPlayer(Player player, Team team) {
+        players.put(player.getUniqueId(), new GamePlayer(player.getUniqueId(), team));
+
+        sendTeamMessage(player.getName() + " added!");
+    }
+
+    public void removePlayer(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        sendTeamMessage(player.getName() + " removed!");
+
+        this.players.remove(uuid);
+    }
+
+    private void sendTeamMessage(String message) {
+        for (UUID playerUUID : players.keySet()) {
+
+            Player player = Bukkit.getPlayer(playerUUID);
+
+            if (Bukkit.getPlayer(playerUUID).isOnline()) {
+                assert player != null;
+                player.sendMessage(message);
+            }
+        }
+    }
+
+
+    // Getters ----------------------------------------------------------------
     public String getDisplayName() {
         return teamData.getDisplayName();
     }
@@ -60,6 +88,7 @@ public class Team {
     public TeamInfo getTeamData() {
         return teamData;
     }
+    // Getters ----------------------------------------------------------------
 
 
 }
