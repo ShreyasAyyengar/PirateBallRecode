@@ -23,17 +23,18 @@ public class TeamBall {
 
         gameProfile.getProperties().put("textures", new Property("textures", info.getTexture()));
 
+        Field field;
         try {
-            Field field;
             field = ballSkullMeta.getClass().getDeclaredField("profile");
             field.setAccessible(true);
             field.set(ballSkullMeta, gameProfile);
-        } catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException x) {
+        } catch (ReflectiveOperationException x) {
             x.printStackTrace();
         }
 
         ballSkullMeta.setDisplayName(info.getDisplayName());
         ballSkullMeta.setLore(lore);
+        ball.setItemMeta(ballSkullMeta);
 
         this.ball = ball;
     }

@@ -3,4 +3,7 @@ version: '${project.version}'
 main: me.shreyasayyengar.pirateballremastered.PirateBallPlugin
 api-version: 1.17
 prefix: PirateBall
-authors: [ Shreyas ]
+author: Shreyas Ayyengar
+
+commands:
+  pirateball:

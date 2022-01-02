@@ -11,8 +11,7 @@ public final class PirateBallPlugin extends JavaPlugin {
     public void onEnable() {
         PirateBallPlugin.INSTANCE = this;
 
-
-        registerEvents();
+        registerGlobalEvents();
         registerCommands();
 
     }
@@ -21,7 +20,7 @@ public final class PirateBallPlugin extends JavaPlugin {
         this.getCommand("pirateball").setExecutor(new PirateBallBaseCommand());
     }
 
-    private void registerEvents() {
+    private void registerGlobalEvents() {
 
     }
 

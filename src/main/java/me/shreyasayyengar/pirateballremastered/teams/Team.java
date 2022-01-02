@@ -1,11 +1,10 @@
 package me.shreyasayyengar.pirateballremastered.teams;
 
 import me.shreyasayyengar.pirateballremastered.game.GamePlayer;
+import me.shreyasayyengar.pirateballremastered.utils.Utility;
 import me.shreyasayyengar.pirateballremastered.utils.worldutils.CuboidRegion;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -20,33 +19,44 @@ public class Team {
     public Team(TeamInfo teamInfo, TeamBall ballInfo) {
         this.teamData = teamInfo;
         this.ballData = ballInfo;
+    }
 
-//        this.players = players; will work out a custom player object for the game
+    public void addPlayer(GamePlayer gamePlayer) {
+        players.put(gamePlayer.getPlayerUUID(), gamePlayer);
+
+        sendTeamMessage(gamePlayer.toBukkitPlayer().getName() + " added!");
 
     }
 
-    public void addPlayer(Player player, Team team) {
-        players.put(player.getUniqueId(), new GamePlayer(player.getUniqueId(), team));
-
-        sendTeamMessage(player.getName() + " added!");
-    }
-
-    public void removePlayer(Player player) {
-        UUID uuid = player.getUniqueId();
-
-        sendTeamMessage(player.getName() + " removed!");
+    public void removePlayer(GamePlayer gamePlayer) {
+        UUID uuid = gamePlayer.getPlayerUUID();
+        sendTeamMessage(gamePlayer.toBukkitPlayer().getName() + " removed!");
 
         this.players.remove(uuid);
     }
 
-    private void sendTeamMessage(String message) {
-        for (UUID playerUUID : players.keySet()) {
+    public void sendTeamMessage(String message) {
+        for (GamePlayer gamePlayer : players.values()) {
+            if (gamePlayer.isOnline()) {
+                gamePlayer.toBukkitPlayer().sendMessage(Utility.colourise(message));
+            }
+        }
 
-            Player player = Bukkit.getPlayer(playerUUID);
+    }
 
-            if (Bukkit.getPlayer(playerUUID).isOnline()) {
-                assert player != null;
-                player.sendMessage(message);
+    public void sendTeamActionBar(String message) {
+        for (GamePlayer gamePlayer : players.values()) {
+            if (gamePlayer.isOnline()) {
+                Utility.sendActionBar(gamePlayer.toBukkitPlayer(), message);
+            }
+        }
+    }
+
+    public void sendTeamTitle(String message, String subtitle, int fadeIn, int stay, int fadeOut) {
+
+        for (GamePlayer gamePlayer : players.values()) {
+            if (gamePlayer.isOnline()) {
+                gamePlayer.toBukkitPlayer().sendTitle(Utility.colourise(message), Utility.colourise(subtitle), fadeIn, stay, fadeOut);
             }
         }
     }
@@ -85,8 +95,12 @@ public class Team {
         return ballData;
     }
 
-    public TeamInfo getTeamData() {
+    public TeamInfo getData() {
         return teamData;
+    }
+
+    public HashMap<UUID, GamePlayer> getPlayers() {
+        return players;
     }
     // Getters ----------------------------------------------------------------
 

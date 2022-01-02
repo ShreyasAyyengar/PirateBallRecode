@@ -16,7 +16,10 @@ public enum TeamInfo {
             Material.RED_BANNER,
             Material.RED_WOOL,
             Material.RED_STAINED_GLASS,
-            new CuboidRegion("RED", new Location(Bukkit.getWorld("world"), 58, 16, 58), new Location(Bukkit.getWorld("world"), 9, 4, 9))
+            new CuboidRegion("RED", new Location(Bukkit.getWorld("world"), 58, 16, 58), new Location(Bukkit.getWorld("world"), 9, 4, 9)),
+            new Location(Bukkit.getWorld("world"), 9, 4, 9),
+            new Location(Bukkit.getWorld("world"), 9, 4, 9)
+
     ),
 
     BLUE(
@@ -26,7 +29,9 @@ public enum TeamInfo {
             Material.BLUE_BANNER,
             Material.BLUE_WOOL,
             Material.BLUE_STAINED_GLASS,
-            new CuboidRegion("BLUE", new Location(Bukkit.getWorld("world"), 58, 16, -41), new Location(Bukkit.getWorld("world"), 9, 4, 7))
+            new CuboidRegion("BLUE", new Location(Bukkit.getWorld("world"), 58, 16, -41), new Location(Bukkit.getWorld("world"), 9, 4, 7)),
+            new Location(Bukkit.getWorld("world"), 9, 4, 7),
+            new Location(Bukkit.getWorld("world"), 9, 4, 7)
     ),
 
     YELLOW(
@@ -36,7 +41,9 @@ public enum TeamInfo {
             Material.YELLOW_BANNER,
             Material.YELLOW_WOOL,
             Material.YELLOW_STAINED_GLASS,
-            new CuboidRegion("GREEN", new Location(Bukkit.getWorld("world"), -41, 16, 58), new Location(Bukkit.getWorld("world"), 7, 4, 9))
+            new CuboidRegion("GREEN", new Location(Bukkit.getWorld("world"), -41, 16, 58), new Location(Bukkit.getWorld("world"), 7, 4, 9)),
+            new Location(Bukkit.getWorld("world"), 7, 4, 9),
+            new Location(Bukkit.getWorld("world"), 7, 4, 9)
     ),
 
     GREEN(
@@ -46,8 +53,9 @@ public enum TeamInfo {
             Material.LIME_BANNER,
             Material.LIME_WOOL,
             Material.LIME_STAINED_GLASS,
-            new CuboidRegion("GREEN", new Location(Bukkit.getWorld("world"), -41, 16, -41), new Location(Bukkit.getWorld("world"), 7, 4, 7))
-
+            new CuboidRegion("GREEN", new Location(Bukkit.getWorld("world"), -41, 16, -41), new Location(Bukkit.getWorld("world"), 7, 4, 7)),
+            new Location(Bukkit.getWorld("world"), 7, 4, 7),
+            new Location(Bukkit.getWorld("world"), 7, 4, 7)
     );
 
     private final String displayName;
@@ -57,8 +65,10 @@ public enum TeamInfo {
     private final Material wool;
     private final Material glass;
     private final CuboidRegion region;
+    private final Location spawn;
+    private final Location jail;
 
-    TeamInfo(String displayName, String chatString, Color leatherColour, Material banner, Material wool, Material glass, CuboidRegion region) {
+    TeamInfo(String displayName, String chatString, Color leatherColour, Material banner, Material wool, Material glass, CuboidRegion region, Location spawn, Location jail) {
         this.displayName = displayName;
         this.chatString = chatString;
         this.leatherColour = leatherColour;
@@ -66,6 +76,8 @@ public enum TeamInfo {
         this.wool = wool;
         this.glass = glass;
         this.region = region;
+        this.spawn = spawn;
+        this.jail = jail;
     }
 
     public String getDisplayName() {
@@ -94,5 +106,13 @@ public enum TeamInfo {
 
     public CuboidRegion getRegion() {
         return region;
+    }
+
+    public Location getSpawn() {
+        return spawn;
+    }
+
+    public Location getJail() {
+        return jail;
     }
 }
