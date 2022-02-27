@@ -2,7 +2,9 @@ package me.shreyasayyengar.pirateballremastered.commands;
 
 import me.shreyasayyengar.pirateballremastered.arena.Arena;
 import me.shreyasayyengar.pirateballremastered.game.GameManager;
+import me.shreyasayyengar.pirateballremastered.utils.ConfigManager;
 import me.shreyasayyengar.pirateballremastered.utils.Utility;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,6 +23,10 @@ public class PirateBallBaseCommand implements CommandExecutor {
                     Utility.dropBalls(player);
                 }
 
+                if (args[0].equals("setspec")) {
+                    ConfigManager.setSpectatorLocation(player.getLocation());
+                }
+
                 if (args[0].equals("start")) {
                     new Arena().addPlayer(player);
                 }
@@ -29,6 +35,22 @@ public class PirateBallBaseCommand implements CommandExecutor {
                     GameManager.getArenas().get(0).addPlayer(player);
                 }
 
+                if (args[0].equalsIgnoreCase("loc")) {
+                    Bukkit.getLogger().info(player.getLocation().getBlockX() + ", "
+                            + Math.round(player.getLocation().getY()) + ", "
+                            + player.getLocation().getBlockZ());
+                }
+
+            }
+
+            if (args.length == 2) {
+                if (args[0].equals("setplayers")) {
+                    try {
+                        ConfigManager.setRequiredPlayers(Integer.parseInt(args[1]));
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(Utility.colourise("&aThat is not a valid number!"));
+                    }
+                }
             }
         }
         return false;

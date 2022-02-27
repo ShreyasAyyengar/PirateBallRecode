@@ -1,6 +1,7 @@
 package me.shreyasayyengar.pirateballremastered;
 
 import me.shreyasayyengar.pirateballremastered.commands.PirateBallBaseCommand;
+import me.shreyasayyengar.pirateballremastered.utils.ConfigManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PirateBallPlugin extends JavaPlugin {
@@ -13,6 +14,7 @@ public final class PirateBallPlugin extends JavaPlugin {
 
         registerGlobalEvents();
         registerCommands();
+        ConfigManager.init(this);
 
     }
 
@@ -26,7 +28,6 @@ public final class PirateBallPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
     }
 
     public static PirateBallPlugin getInstance() {

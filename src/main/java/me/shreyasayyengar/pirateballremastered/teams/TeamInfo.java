@@ -17,8 +17,8 @@ public enum TeamInfo {
             Material.RED_WOOL,
             Material.RED_STAINED_GLASS,
             new CuboidRegion("RED", new Location(Bukkit.getWorld("world"), 58, 16, 58), new Location(Bukkit.getWorld("world"), 9, 4, 9)),
-            new Location(Bukkit.getWorld("world"), 9, 4, 9),
-            new Location(Bukkit.getWorld("world"), 9, 4, 9)
+            new Location(Bukkit.getWorld("world"), 42.5, 5, 42.5, 135, 0),
+            new Location(Bukkit.getWorld("world"), 46.5, 5, 46.5, 135, 0)
 
     ),
 
@@ -30,8 +30,8 @@ public enum TeamInfo {
             Material.BLUE_WOOL,
             Material.BLUE_STAINED_GLASS,
             new CuboidRegion("BLUE", new Location(Bukkit.getWorld("world"), 58, 16, -41), new Location(Bukkit.getWorld("world"), 9, 4, 7)),
-            new Location(Bukkit.getWorld("world"), 9, 4, 7),
-            new Location(Bukkit.getWorld("world"), 9, 4, 7)
+            new Location(Bukkit.getWorld("world"), 42.5, 5, -26.5, 45, 0),
+            new Location(Bukkit.getWorld("world"), 46.5, 5, -30.5, 45, 0)
     ),
 
     YELLOW(
@@ -42,8 +42,8 @@ public enum TeamInfo {
             Material.YELLOW_WOOL,
             Material.YELLOW_STAINED_GLASS,
             new CuboidRegion("GREEN", new Location(Bukkit.getWorld("world"), -41, 16, 58), new Location(Bukkit.getWorld("world"), 7, 4, 9)),
-            new Location(Bukkit.getWorld("world"), 7, 4, 9),
-            new Location(Bukkit.getWorld("world"), 7, 4, 9)
+            new Location(Bukkit.getWorld("world"), -25.5, 5, 42.5, -135, 0),
+            new Location(Bukkit.getWorld("world"), -29.5, 5, 46.5, -135, 0)
     ),
 
     GREEN(
@@ -54,8 +54,8 @@ public enum TeamInfo {
             Material.LIME_WOOL,
             Material.LIME_STAINED_GLASS,
             new CuboidRegion("GREEN", new Location(Bukkit.getWorld("world"), -41, 16, -41), new Location(Bukkit.getWorld("world"), 7, 4, 7)),
-            new Location(Bukkit.getWorld("world"), 7, 4, 7),
-            new Location(Bukkit.getWorld("world"), 7, 4, 7)
+            new Location(Bukkit.getWorld("world"), -25.5, 5, -26.5, -45, 0),
+            new Location(Bukkit.getWorld("world"), -29.5, 5, -30.5, -45, 0)
     );
 
     private final String displayName;

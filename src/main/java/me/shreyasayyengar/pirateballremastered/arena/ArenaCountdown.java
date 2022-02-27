@@ -39,7 +39,8 @@ public class ArenaCountdown extends BukkitRunnable {
             cancel();
             arena.setGameState(GameState.WAITING);
             arena.broadcast(Utility.colourise("&cToo little players, start cancelled"));
-//            arena.sendTitle(ChatColor.RED + "Waiting for more players...", null, 0, 200, 20);
+
+            // send title
             return;
         }
 

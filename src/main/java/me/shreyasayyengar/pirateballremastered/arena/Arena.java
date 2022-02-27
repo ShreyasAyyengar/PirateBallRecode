@@ -1,6 +1,5 @@
 package me.shreyasayyengar.pirateballremastered.arena;
 
-import me.shreyasayyengar.pirateballremastered.PirateBallPlugin;
 import me.shreyasayyengar.pirateballremastered.exception.GamePlayerNotFoundException;
 import me.shreyasayyengar.pirateballremastered.game.Game;
 import me.shreyasayyengar.pirateballremastered.game.GameManager;
@@ -10,10 +9,10 @@ import me.shreyasayyengar.pirateballremastered.teams.Team;
 import me.shreyasayyengar.pirateballremastered.teams.TeamBall;
 import me.shreyasayyengar.pirateballremastered.teams.TeamBallInfo;
 import me.shreyasayyengar.pirateballremastered.teams.TeamInfo;
+import me.shreyasayyengar.pirateballremastered.utils.ConfigManager;
 import me.shreyasayyengar.pirateballremastered.utils.Utility;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,11 +22,11 @@ import java.util.UUID;
 
 public class Arena {
 
-    public static final int REQUIRED_PLAYERS = 1;
+    public static final int REQUIRED_PLAYERS = ConfigManager.getRequiredPlayers();
 
     private final ArrayList<GamePlayer> gamePlayers = new ArrayList<>();
-    private final ArrayList<Team> allTeams = new ArrayList<>();
 
+    private final ArrayList<Team> allTeams = new ArrayList<>();
     private final Team redTeam = new Team(TeamInfo.RED, new TeamBall(TeamBallInfo.RED));
     private final Team blueTeam = new Team(TeamInfo.BLUE, new TeamBall(TeamBallInfo.BLUE));
     private final Team yellowTeam = new Team(TeamInfo.YELLOW, new TeamBall(TeamBallInfo.YELLOW));
@@ -63,6 +62,7 @@ public class Arena {
 
     /**
      * Adds a {@link Player} to a live instance of an {@link Arena}.
+     *
      * @param player An online {@link Player}.
      */
     public void addPlayer(@NotNull Player player) {
@@ -77,7 +77,8 @@ public class Arena {
     /**
      * Removes a {@link GamePlayer} from a live instance of an {@link Arena}.
      * It is expected that all players in an arena have a matching {@link GamePlayer} object.
-     *<p></p>
+     * <p></p>
+     *
      * @param gamePlayer A {@link GamePlayer}.
      */
     public void removePlayer(GamePlayer gamePlayer) {
@@ -148,16 +149,7 @@ public class Arena {
         this.gameState = gameState;
 
         switch (gameState) {
-            case WAITING -> {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        if (gameInstance.beginWaiting()) {
-                            cancel();
-                        }
-                    }
-                }.runTaskTimer(PirateBallPlugin.getInstance(), 0L, 10L);
-            }
+            case WAITING -> gameInstance.shouldStartCountdown();
 
             case COUNTDOWN -> startCountdown();
 
@@ -166,7 +158,6 @@ public class Arena {
             case WON -> {
                 // todo announce winner
             }
-
         }
     }
 
@@ -177,11 +168,12 @@ public class Arena {
     /**
      * Gets an instance of {@link GamePlayer} from a UUID.
      * <p></p>
+     *
      * @param uniqueId The UUID.
      * @return {@link GamePlayer} The matching {@link GamePlayer}.
      * @throws GamePlayerNotFoundException If no matching {@link GamePlayer} was found from the UUID provided.
      */
-    public GamePlayer gamePlayerfromUUID(UUID uniqueId) throws GamePlayerNotFoundException {
+    public GamePlayer gamePlayerFromUUID(UUID uniqueId) throws GamePlayerNotFoundException {
 
         for (GamePlayer gamePlayer : gamePlayers) {
             if (gamePlayer.getPlayerUUID().equals(uniqueId)) {

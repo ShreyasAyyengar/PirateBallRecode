@@ -7,13 +7,14 @@ import me.shreyasayyengar.pirateballremastered.exception.GamePlayerNotFoundExcep
 import me.shreyasayyengar.pirateballremastered.teams.Team;
 import me.shreyasayyengar.pirateballremastered.utils.Utility;
 import me.shreyasayyengar.pirateballremastered.utils.worldutils.FloatingItem;
-import org.bukkit.*;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
-import org.bukkit.entity.ThrowableProjectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -23,10 +24,8 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,19 +88,17 @@ public class Game implements Listener {
 
     /**
      * Determines if a live instance of {@link Game} is ready to move to change {@link GameState}.
-     *
-     * @return If the game should proceed.
      */
-    public boolean beginWaiting() {
-
-        boolean shouldStart = false;
-
-        if (Arena.REQUIRED_PLAYERS == arena.getGamePlayers().size()) {
-            arena.setGameState(GameState.COUNTDOWN);
-            shouldStart = true;
-        }
-
-        return shouldStart;
+    public void shouldStartCountdown() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (Arena.REQUIRED_PLAYERS == arena.getGamePlayers().size()) {
+                    arena.setGameState(GameState.COUNTDOWN);
+                    cancel();
+                }
+            }
+        }.runTaskTimer(PirateBallPlugin.getInstance(), 0L, 10L);
     }
 
     // Getters ---------------------------------------------------------------------------------------
@@ -152,30 +149,31 @@ public class Game implements Listener {
      */
 
     @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
+    private void onBlockBreak(BlockBreakEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
         Player eventPlayer = event.getPlayer();
 
         if (!GameManager.isPlaying(eventPlayer)) return;
 
         Arena arena = GameManager.getArena(eventPlayer);
-        GamePlayer gamePlayer = arena.gamePlayerfromUUID(eventPlayer.getUniqueId());
+        GamePlayer gamePlayer = arena.gamePlayerFromUUID(eventPlayer.getUniqueId());
 
         if (GameMechanicsUtil.isValidSteal(event.getBlock(), gamePlayer)) {
             GameMechanicsUtil.dropBall(event.getBlock().getLocation(), gamePlayer);
             GameMechanicsUtil.processValidSteal(gamePlayer);
+            event.setDropItems(false);
         } else {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
+    private void onBlockPlace(BlockPlaceEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
         Player eventPlayer = event.getPlayer();
 
         if (!GameManager.isPlaying(eventPlayer)) return;
 
         Arena arena = GameManager.getArena(eventPlayer);
-        GamePlayer gamePlayer = arena.gamePlayerfromUUID(eventPlayer.getUniqueId());
+        GamePlayer gamePlayer = arena.gamePlayerFromUUID(eventPlayer.getUniqueId());
 
 //        if (eventPlayer.getInventory().getItemInMainHand().isSimilar(gamePlayer.getTeam().getBallData().getBall())) {
         if (eventPlayer.getInventory().getItemInMainHand().getType().equals(Material.PLAYER_HEAD)) {
@@ -191,12 +189,11 @@ public class Game implements Listener {
         if (!GameManager.isPlaying(eventPlayer)) return;
 
         Arena arena = GameManager.getArena(eventPlayer);
-        GamePlayer gamePlayer = arena.gamePlayerfromUUID(eventPlayer.getUniqueId());
+        GamePlayer gamePlayer = arena.gamePlayerFromUUID(eventPlayer.getUniqueId());
 
         if (event.getAction().equals(Action.RIGHT_CLICK_AIR)) {
             if (event.getItem().getType() == Material.PLAYER_HEAD) {
 
-                Location plus1 = new Location(eventPlayer.getWorld(), eventPlayer.getLocation().getX(), eventPlayer.getLocation().getY() + 1, eventPlayer.getLocation().getZ());
                 Vector vector = eventPlayer.getLocation().getDirection().multiply(1.2);
 
                 Snowball ball = eventPlayer.launchProjectile(Snowball.class);
@@ -209,28 +206,34 @@ public class Game implements Listener {
     @EventHandler
     private void onProjectileHit(ProjectileHitEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
 
-        System.out.println(((ThrowableProjectile) event.getEntity()).getItem().getType());
         if (event.getHitEntity() instanceof Player victim && event.getEntity().getShooter() instanceof Player shooter) {
 
             if (!GameManager.isPlaying(victim) && !GameManager.isPlaying(shooter)) return;
+
+            if (victim.getUniqueId().equals(shooter.getUniqueId())) return;
 
             if (GameManager.getArena(victim).equals(GameManager.getArena(shooter))) {
 
                 Arena commonArena = GameManager.getArena(victim);
 
-                GamePlayer victimGamePlayer = commonArena.gamePlayerfromUUID(victim.getUniqueId());
+                GamePlayer victimGamePlayer = commonArena.gamePlayerFromUUID(victim.getUniqueId());
                 Team victimTeam = victimGamePlayer.getTeam();
 
-                GamePlayer shooterGamePlayer = commonArena.gamePlayerfromUUID(shooter.getUniqueId());
+                GamePlayer shooterGamePlayer = commonArena.gamePlayerFromUUID(shooter.getUniqueId());
                 Team shooterTeam = shooterGamePlayer.getTeam();
 
-                GameMechanicsUtil.setDeath(victimGamePlayer, GameMechanicsUtil.RespawnReason.HIT_BY_BALL);
+                if (victimTeam.getDisplayName().equals(shooterTeam.getDisplayName())) {
+                    // TODO: transfer ball to new player
+                } else {
 
-                commonArena.broadcast(victimTeam.getChatColorString() + victimGamePlayer.toBukkitPlayer().getName() + " &7was hit by a ball shot from " + shooterTeam.getChatColorString() + shooterGamePlayer.toBukkitPlayer().getName() + "&7!");
+                    victimGamePlayer.setDespawningAction();
+                    victimGamePlayer.applyDeathTitle(GameMechanicsUtil.RespawnReason.HIT_BY_BALL);
+                    victimGamePlayer.setSpawningAction(shooterTeam.getData().getJail());
+
+                    commonArena.broadcast(victimTeam.getChatColorString() + victimGamePlayer.toBukkitPlayer().getName() + " &7was hit by a ball shot from " + shooterTeam.getChatColorString() + shooterGamePlayer.toBukkitPlayer().getName() + "&7!");
+                }
             }
-
         }
-
     }
 
     @EventHandler
@@ -241,44 +244,42 @@ public class Game implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
+    private void onPlayerJoin(PlayerJoinEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
         Player eventPlayer = event.getPlayer();
 
         if (!GameManager.isPlaying(eventPlayer)) return;
 
         Arena arena = GameManager.getArena(eventPlayer);
-        GamePlayer gamePlayer = arena.gamePlayerfromUUID(eventPlayer.getUniqueId());
+        GamePlayer gamePlayer = arena.gamePlayerFromUUID(eventPlayer.getUniqueId());
 
-        GameMechanicsUtil.setDeath(gamePlayer, GameMechanicsUtil.RespawnReason.RECONNECTED);
+        GameMechanicsUtil.handleReconnection(gamePlayer);
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
+    private void onPlayerQuit(PlayerQuitEvent event) throws ArenaNotFoundException, GamePlayerNotFoundException {
         Player eventPlayer = event.getPlayer();
 
         if (!GameManager.isPlaying(eventPlayer)) return;
 
         Arena arena = GameManager.getArena(eventPlayer);
-        GamePlayer gamePlayer = arena.gamePlayerfromUUID(eventPlayer.getUniqueId());
-
-        arena.broadcast(gamePlayer.getTeam().getData().getChatString() + gamePlayer.toBukkitPlayer().getName() + "&c disconnected!");
+        GamePlayer gamePlayer = arena.gamePlayerFromUUID(eventPlayer.getUniqueId());
 
         GameMechanicsUtil.handleDisconnection(gamePlayer);
     }
 
     @EventHandler
-    private void onFoodLoss(FoodLevelChangeEvent e) {
-        e.setCancelled(true);
+    private void onFoodLoss(FoodLevelChangeEvent event) {
+        event.setCancelled(true);
     }
 
     @EventHandler
-    private void onWeatherChange(WeatherChangeEvent e) {
-        e.setCancelled(true);
+    private void onWeatherChange(WeatherChangeEvent event) {
+        event.setCancelled(true);
     }
 
     @EventHandler
-    private void onPlayerHandSwitch(PlayerSwapHandItemsEvent e) {
-        e.setCancelled(true);
+    private void onPlayerHandSwitch(PlayerSwapHandItemsEvent event) {
+        event.setCancelled(true);
     }
 
 
@@ -352,6 +353,8 @@ public class Game implements Listener {
 
         public static void handleDisconnection(GamePlayer gamePlayer) {
             Arena currentArena = gamePlayer.getCurrentArena();
+            gamePlayer.setLastStandingIn(gamePlayer.getTeamRegionIn());
+            currentArena.broadcast(gamePlayer.getTeam().getData().getChatString() + gamePlayer.toBukkitPlayer().getName() + "&c disconnected!");
 
             new BukkitRunnable() {
                 @Override
@@ -363,146 +366,27 @@ public class Game implements Listener {
             }.runTaskLater(PirateBallPlugin.getInstance(), 2400);
         }
 
-        public static void sendToJail(GamePlayer player, Team theJail) {
-            Location jail = theJail.getData().getJail();
-        }
+        public static void handleReconnection(GamePlayer gamePlayer) {
+            Arena currentArena = gamePlayer.getCurrentArena();
+            currentArena.broadcast(gamePlayer.getTeam().getChatColorString() + gamePlayer.toBukkitPlayer().getName() + "&7 has reconnected!");
 
-        public static void setDeath(GamePlayer gamePlayer, RespawnReason reason) {
-            CURRENTLY_RESPAWNING.add(gamePlayer);
-
-            Player bukkitPlayer = gamePlayer.toBukkitPlayer();
-            @NotNull ItemStack[] armorContents = bukkitPlayer.getInventory().getArmorContents();
-
-            String title = null;
-            String subtitle = ChatColor.GRAY + "Moving to jail in ";
-
-            switch (reason) {
-                case KILLED -> title = "&cYou died to " + Objects.requireNonNull(gamePlayer.toBukkitPlayer().getLastDamageCause()).getEntity().getName();
-
-                case HIT_BY_BALL -> title = "&cYou've been hit by a ball!";
-
-                case REMOVED_FROM_JAIL -> {
-                    title = "&aYou teammate has saved you!";
-                    subtitle = "&7Returning to base in ";
-                }
-
-                case RECONNECTED -> {
-                    title = "&6Reconnected to the game!";
-                    subtitle = "&7Returning to base in ";
-                }
-
-            } // Title Factory
-
-            final int[] seconds = {5};
-
-            String finalTitle = title;
-            String finalSubtitle = subtitle;
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-
-                    if (seconds[0] == 0) {
-                        bukkitPlayer.sendMessage(Utility.colourise("&aRespawned"));
-                        bukkitPlayer.setGameMode(GameMode.SURVIVAL);
-                        bukkitPlayer.getInventory().setArmorContents(armorContents);
-                        CURRENTLY_RESPAWNING.remove(gamePlayer);
-
-                        for (Player loopedPlayer : Bukkit.getOnlinePlayers()) {
-                            loopedPlayer.showPlayer(PirateBallPlugin.getInstance(), bukkitPlayer);
-                        }
-                        cancel();
-
-                    } else if (seconds[0] == 1) {
-                        bukkitPlayer.sendTitle(Utility.colourise(finalTitle), Utility.colourise(finalSubtitle + "&e" + seconds[0] + " &7second"), 0, 25, 0);
-                    } else {
-                        bukkitPlayer.sendTitle(Utility.colourise(finalTitle), Utility.colourise(finalSubtitle + "&e" + seconds[0] + " &7seconds"), 0, 25, 0);
-                    }
-                    seconds[0]--;
-                }
-            }.runTaskTimer(PirateBallPlugin.getInstance(), 0, 20);
-        }
-
-        public static void applyDeathTitle(GamePlayer gamePlayer, RespawnReason reason) {
-            Player bukkitPlayer = gamePlayer.toBukkitPlayer();
-
-            String title = null;
-            String subtitle = ChatColor.GRAY + "Moving to jail in ";
-
-            switch (reason) {
-                case KILLED -> title = "&cYou died to " + Objects.requireNonNull(gamePlayer.toBukkitPlayer().getLastDamageCause()).getEntity().getName();
-
-                case HIT_BY_BALL -> title = "&cYou've been hit by a ball!";
-
-                case REMOVED_FROM_JAIL -> {
-                    title = "&aYou teammate has saved you!";
-                    subtitle = "&7Returning to base in ";
-                }
-
-                case RECONNECTED -> {
-                    title = "&6Reconnected to the game!";
-                    subtitle = "&7Returning to base in ";
-                }
-
-            } // Title Factory
-
-            final int[] seconds = {5};
-
-            String finalTitle = title;
-            String finalSubtitle = subtitle;
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-
-                    if (seconds[0] == 0) {
-                        bukkitPlayer.sendMessage(Utility.colourise("&aRespawned"));
-                        cancel();
-
-                    } else if (seconds[0] == 1) {
-                        bukkitPlayer.sendTitle(Utility.colourise(finalTitle), Utility.colourise(finalSubtitle + "&e" + seconds[0] + " &7second"), 0, 25, 0);
-                    } else {
-                        bukkitPlayer.sendTitle(Utility.colourise(finalTitle), Utility.colourise(finalSubtitle + "&e" + seconds[0] + " &7seconds"), 0, 25, 0);
-                    }
-                    seconds[0]--;
-                }
-            }.runTaskTimer(PirateBallPlugin.getInstance(), 0, 20);
-        }
-
-        public static void setSpawningAction(GamePlayer gamePlayer, boolean added) {
-
-            // todo work
-
-            if (added) {
-
-                for (Player player : gamePlayer.getCurrentArena().getBukkitPlayers()) {
-                    player.showPlayer(PirateBallPlugin.getInstance(), gamePlayer.toBukkitPlayer());
-                }
-
-                gamePlayer.applyArmor();
-                gamePlayer.toBukkitPlayer().setGameMode(GameMode.SURVIVAL);
-                gamePlayer.toBukkitPlayer().teleport(gamePlayer.getTeam().getData().getSpawn());
-
-
+            if (Objects.equals(gamePlayer.getLastStandingIn().getDisplayName(), gamePlayer.getTeam().getDisplayName())) {
+                gamePlayer.applyDeathTitle(RespawnReason.RECONNECTED_SAFE);
+                gamePlayer.setDespawningAction();
+                gamePlayer.setSpawningAction(gamePlayer.getTeam().getData().getSpawn());
             } else {
-
-                for (Player player : gamePlayer.getCurrentArena().getBukkitPlayers()) {
-                    player.hidePlayer(PirateBallPlugin.getInstance(), gamePlayer.toBukkitPlayer());
-                }
-
-                gamePlayer.toBukkitPlayer().getInventory().clear();
-                gamePlayer.toBukkitPlayer().setGameMode(GameMode.SPECTATOR);
-                gamePlayer.toBukkitPlayer().teleport(gamePlayer.getTeam().getData().getSpawn());
+                gamePlayer.applyDeathTitle(RespawnReason.RECONNECTED_UNSAFE);
+                gamePlayer.setDespawningAction();
+                gamePlayer.setSpawningAction(gamePlayer.getLastStandingIn().getData().getJail());
             }
-
-            gamePlayer.toBukkitPlayer().getActivePotionEffects().clear();
-
-
         }
 
-
-        private enum RespawnReason {
+        enum RespawnReason {
             KILLED,
             HIT_BY_BALL,
-            RECONNECTED, REMOVED_FROM_JAIL
+            RECONNECTED_SAFE,
+            RECONNECTED_UNSAFE,
+            REMOVED_FROM_JAIL
         }
     }
 }

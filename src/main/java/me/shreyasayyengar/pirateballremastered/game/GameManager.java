@@ -18,7 +18,6 @@ public class GameManager {
         for (Arena arena : GameManager.arenas) {
 
             for (GamePlayer gamePlayer : arena.getGamePlayers()) {
-
                 if (gamePlayer.getPlayerUUID().equals(uuid)) {
                     return true;
                 }

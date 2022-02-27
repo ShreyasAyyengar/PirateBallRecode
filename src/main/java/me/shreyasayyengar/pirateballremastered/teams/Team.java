@@ -61,7 +61,6 @@ public class Team {
         }
     }
 
-
     // Getters ----------------------------------------------------------------
     public String getDisplayName() {
         return teamData.getDisplayName();
@@ -103,6 +102,4 @@ public class Team {
         return players;
     }
     // Getters ----------------------------------------------------------------
-
-
 }
